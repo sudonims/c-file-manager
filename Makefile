@@ -19,6 +19,7 @@ PROG = fs
 
 all: $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(PROG) $(LIBS)
+	./fs
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<

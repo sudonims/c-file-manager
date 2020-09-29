@@ -25,13 +25,14 @@ void init_curses() {
   init_pair(2, STATUS_FILECOUNT_COLOR, 0);
   init_pair(3, STATUS_SELECTED_COLOR, 0);
 }
-// sigset_t x;
+sigset_t x;
 WINDOW *current_win;
+int selection, maxx, maxy, len = 0, start = 0;
 
 void init_windows() {
   current_win = newwin(80, 24, 0, 0);
-  // keypad(current_win, TRUE);
-  // sigprocmask(SIG_UNBLOCK, &x, NULL);
+  keypad(current_win, TRUE);
+  sigprocmask(SIG_UNBLOCK, &x, NULL);
 }
 
 int get_no_files_in_directory(char *directory) {
@@ -76,61 +77,64 @@ int get_files(char *directory, char *target[]) {
   return 1;
 }
 
+void scrollUp() {
+  selection--;
+  selection = (selection < 0) ? 0 : selection;
+  wclear(current_win);
+  if (len >= maxy - 1)
+    if (selection <= start + maxy / 2) {
+      if (start == 0)
+        wclear(current_win);
+      else {
+        start--;
+        wclear(current_win);
+      }
+    }
+}
+
 int main() {
   int i = 0;
   init_curses();
   char cwd[1000];
   getcwd(cwd, sizeof(cwd));
-  // printf("%d", get_no_files_in_directory(cwd));
-  int no_files;
-  char *files[(no_files = get_no_files_in_directory(cwd))], *temp_dir;
+  char *files[(len = get_no_files_in_directory(cwd))], *temp_dir;
   get_files(cwd, files);
 
-  // for (int i = 0; i < no_files; i++) {
-  //   printf("%s\n", files[i]);
-  // }
-  // init_windows();
-  initscr();
-  int t = 0, row, col;
-  getmaxyx(stdscr, row, col);
-  for (i = 0; i < no_files; i++) {
-    // if (t == 24 - 1)
-    //   break;
-    // free(temp_dir);
-    // allocSize = snprintf(NULL, 0, "%s/%s", dir, directories[i]);
-    // temp_dir = malloc(allocSize + 1);
-    // if (temp_dir == NULL) {
-    //   endwin();
-    //   printf("%s\n", "Couldn't allocate memory!");
-    //   exit(1);
-    // }
-    // snprintf(temp_dir, allocSize + 1, "%s/%s", dir, directories[i]);
-    // if (i == selection)
-    //   wattron(current_win, A_STANDOUT);
-    // else
-    //   wattroff(current_win, A_STANDOUT);
-    int size = snprintf(NULL, 0, "%s/%s", cwd, files[i]);
-    // printf("%d", size);
-    temp_dir = malloc(size + 1);
-    snprintf(temp_dir, size + 1, "%s/%s", cwd, files[i]);
-    // wattron(current_win, A_BOLD);
-    // wattron(current_win, COLOR_PAIR(1));
-    // if (is_regular_file(temp_dir) == 0) {
-    // }
-    // else {
-    wattroff(current_win, A_BOLD);
-    wattroff(current_win, COLOR_PAIR(1));
-    // }
-    // wmove(current_win, t + 1, 2);
-    // if (checkClipboard(temp_dir) == 0)
-    // mvwprintw(current_win, i + 1, 2, "%s\n", temp_dir);
-    mvprintw(i + 2, 2, "%s", temp_dir);
-    // printw("%s\n", temp_dir);
-    // wprintw(current_win, "%.*s\n", 80 / 2, files[i]);
-    // else
-    // wprintw(current_win, "* %.*s\n", 80 / 2 - 3, files[i]);
+  int t = 0;
+  getmaxyx(stdscr, maxx, maxy);
+
+  int ch;
+  selection = len;
+  init_windows();
+  do {
+    for (i = start; i < len; i++) {
+      int size = snprintf(NULL, 0, "%s/%s", cwd, files[i]);
+      // printf("%d", size);
+      if (i == selection) {
+        mvprintw(i + 2, 0, "Hmm");
+        wattron(current_win, COLOR_PAIR(3));
+      } else
+        wattroff(current_win, COLOR_PAIR(3));
+      temp_dir = malloc(size + 1);
+      snprintf(temp_dir, size + 1, "%s/%s", cwd, files[i]);
+      // wattron(current_win, A_BOLD);
+      // wattron(current_win, COLOR_PAIR(1));
+      mvprintw(i + 2, 2, "%s", temp_dir);
+      free(temp_dir);
+    }
     refresh();
-  }
-  getch();
+    // wrefresh(current_win);
+    if (selection == -1)
+      selection = 0;
+
+    switch ((ch = wgetch(current_win))) {
+      case KEY_UP:
+      case KEY_NAVUP:
+        // mvprintw(i + 2, 2, "lol");
+        scrollUp();
+        break;
+    }
+
+  } while (ch != 'q');
   endwin();
 }
