@@ -1,3 +1,5 @@
+CC = gcc
+
 NCURSES_CFLAGS = `pkg-config --cflags ncursesw`
 NCURSES_LIBS =  `pkg-config --libs ncursesw`
 
