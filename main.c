@@ -26,13 +26,15 @@ void init_curses() {
   init_pair(3, STATUS_SELECTED_COLOR, 0);
 }
 sigset_t x;
-WINDOW *current_win, *preview_win, *status_win;
+
+char cwd[1000];
+struct stat file_stats;
+WINDOW *current_win, *preview_win;
 int selection, maxx, maxy, len = 0, start = 0;
 
 void init_windows() {
   current_win = newwin(maxy, maxx / 2 + 2, 0, 0);
   preview_win = newwin(maxy, maxx / 2 - 1, 0, maxx / 2 + 1);
-  status_win = newwin(2, maxx, maxy, 0);
   keypad(current_win, TRUE);
   sigprocmask(SIG_UNBLOCK, &x, NULL);
 }
@@ -113,10 +115,33 @@ void scroll_down() {
     }
 }
 
+void handle_enter(char *files[]) {
+  char *temp, *a;
+  a = strdup(cwd);
+  temp = malloc(strlen(files[selection]) + 1);
+  // wmove(current_win, 10, 2);
+  // wprintw(current_win, "%s", a);
+  // refreshWindows();
+  // sleep(3);
+  snprintf(temp, strlen(files[selection]) + 2, "/%s", files[selection]);
+  strcat(a, temp);
+  // wmove(current_win, 11, 2);
+  // wprintw(current_win, "%s", a);
+  // refreshWindows();
+  stat(a, &file_stats);
+  // wmove(current_win, 12, 2);
+  // wprintw(current_win, "%d", file_stats.st_mode);
+  // refreshWindows();
+  file_stats.st_mode == 16877 ? strcat(cwd, temp) : 1 == 1;
+  // wmove(current_win, 14, 2);
+  // wprintw(current_win, "%s", cwd);
+  // refreshWindows();
+  // sleep(10);
+}
+
 int main() {
   int i = 0;
   init_curses();
-  char cwd[1000];
   getcwd(cwd, sizeof(cwd));
 
   int ch;
@@ -128,11 +153,11 @@ int main() {
 
     temp_len = len <= 0 ? 1 : len;
 
-    char *files[temp_len], *temp_dir;
-    // char *files[(len = get_no_files_in_directory(cwd) <= 0
-    //                        ? 0
-    //                        : get_no_files_in_directory(cwd))],
-
+    // char *files[temp_len], *temp_dir;
+    char *files[(len = get_no_files_in_directory(cwd) <= 0
+                           ? 0
+                           : get_no_files_in_directory(cwd))],
+        *temp_dir;
     get_files(cwd, files);
 
     if (selection > len - 1) {
@@ -155,18 +180,19 @@ int main() {
       } else {
         wattroff(current_win, A_STANDOUT);
       }
+
       temp_dir = malloc(size + 1);
       snprintf(temp_dir, size + 1, "%s/%s", cwd, files[i]);
 
+      stat(temp_dir, &file_stats);
+      file_stats.st_mode == 16877 ? wattron(current_win, COLOR_PAIR(1))
+                                  : wattroff(current_win, COLOR_PAIR(1));
       wmove(current_win, t + 1, 2);
-      wprintw(current_win, "%.*s\n", maxx / 2, files[i]);
+      wprintw(current_win, "%.*s %d\n", maxx / 2, files[i], file_stats.st_mode);
       // mvprintw(i + 2, 2, "%s", temp_dir);
-      // free(temp_dir);
+      free(temp_dir);
       t++;
     }
-    // refresh();
-    // wrefresh(current_win);
-
     refreshWindows();
 
     switch ((ch = wgetch(current_win))) {
@@ -179,6 +205,11 @@ int main() {
       case KEY_NAVDOWN:
         scroll_down();
         break;
+      case KEY_ENTER:
+        handle_enter(files);
+        break;
+        // default:
+        //   break;
     }
 
   } while (ch != 'q');

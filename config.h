@@ -137,4 +137,5 @@
 // Reload
 #define KEY_RELOAD 'r'
 
+#define KEY_ENTER 10
 #endif
