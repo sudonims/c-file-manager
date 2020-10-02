@@ -58,8 +58,7 @@ int get_no_files_in_directory(char *directory) {
 
   while ((dir_entry = readdir(dir_)) != NULL) {
     // Skip . and ..
-    if (strcmp(dir_entry->d_name, ".") != 0 &&
-        strcmp(dir_entry->d_name, "..") != 0) {
+    if (strcmp(dir_entry->d_name, ".") != 0) {
       len++;
     }
   }
@@ -79,8 +78,7 @@ int get_files(char *directory, char *target[]) {
 
   while ((dir_entry = readdir(dir_)) != NULL) {
     // Skip . and ..
-    if (strcmp(dir_entry->d_name, ".") != 0 &&
-        strcmp(dir_entry->d_name, "..") != 0) {
+    if (strcmp(dir_entry->d_name, ".") != 0) {
       target[i++] = strdup(dir_entry->d_name);
     }
   }
@@ -115,14 +113,24 @@ void scroll_down() {
     }
 }
 
+char *get_parent_directory(char *cwd) {
+  char *a;
+  a = strdup(cwd);
+  int i = strlen(a) - 1;
+  while (a[--i] != '/')
+    ;
+  a[i] = '\0';
+  return a;
+}
+
 void handle_enter(char *files[]) {
   char *temp, *a;
   a = strdup(cwd);
   temp = malloc(strlen(files[selection]) + 1);
-  // wmove(current_win, 10, 2);
-  // wprintw(current_win, "%s", a);
-  // refreshWindows();
-  // sleep(3);
+  wmove(current_win, 10, 2);
+  wprintw(current_win, "%s \n %s", cwd, get_parent_directory(cwd));
+  refreshWindows();
+  sleep(3);
   snprintf(temp, strlen(files[selection]) + 2, "/%s", files[selection]);
   strcat(a, temp);
   // wmove(current_win, 11, 2);
@@ -188,7 +196,7 @@ int main() {
       file_stats.st_mode == 16877 ? wattron(current_win, COLOR_PAIR(1))
                                   : wattroff(current_win, COLOR_PAIR(1));
       wmove(current_win, t + 1, 2);
-      wprintw(current_win, "%.*s %d\n", maxx / 2, files[i], file_stats.st_mode);
+      wprintw(current_win, "%.*s\n", maxx / 2, files[i], file_stats.st_mode);
       // mvprintw(i + 2, 2, "%s", temp_dir);
       free(temp_dir);
       t++;
