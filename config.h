@@ -1,9 +1,11 @@
 #ifndef CONFIG
 #define CONFIG
 
-/*
-    cfiles settings
-*/
+typedef struct directory_ {
+  char cwd[1000];
+  char *parent;
+  char *files[];
+} directory_t;
 
 // Set to 1 if you want to see hidden files on startup
 #define SHOW_HIDDEN 0
@@ -14,21 +16,7 @@
 // Set to 0 if you don't want to see number of selected files in the statusbar
 #define SHOW_SELECTION_COUNT 1
 
-// Set to 0 if you don't want to see PDF Previews
-#define SHOW_PDF_PREVIEWS 0
-
-// Program used to open non-text file (Eg: `xdg-open` or `thunar`)
 #define FILE_OPENER "xdg-open"
-
-// Display Image Script
-#define DISPLAYIMG "/usr/share/cfiles/scripts/displayimg_uberzug"
-
-// Clear Image Preview Script
-#define CLEARIMG "/usr/share/cfiles/scripts/clearimg_uberzug"
-
-/*
-    Color Settings
-*/
 
 // Shell Color Number to use for directories
 #define DIR_COLOR 4
@@ -39,10 +27,6 @@
 // Shell Color Number to use for selected file which is displayed in the
 // statusbar
 #define STATUS_SELECTED_COLOR 6
-
-/*
-    Change your keybindings in this section
-*/
 
 // Go up
 #define KEY_NAVUP 'k'

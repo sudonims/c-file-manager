@@ -27,7 +27,7 @@ void init_curses() {
 }
 sigset_t x;
 
-char cwd[1000];
+char cwd[1000], *parent_dir;
 struct stat file_stats;
 WINDOW *current_win, *preview_win;
 int selection, maxx, maxy, len = 0, start = 0;
@@ -126,21 +126,29 @@ char *get_parent_directory(char *cwd) {
 void handle_enter(char *files[]) {
   char *temp, *a;
   a = strdup(cwd);
-  temp = malloc(strlen(files[selection]) + 1);
-  wmove(current_win, 10, 2);
-  wprintw(current_win, "%s \n %s", cwd, get_parent_directory(cwd));
-  refreshWindows();
-  sleep(3);
-  snprintf(temp, strlen(files[selection]) + 2, "/%s", files[selection]);
-  strcat(a, temp);
-  // wmove(current_win, 11, 2);
-  // wprintw(current_win, "%s", a);
-  // refreshWindows();
-  stat(a, &file_stats);
-  // wmove(current_win, 12, 2);
-  // wprintw(current_win, "%d", file_stats.st_mode);
-  // refreshWindows();
-  file_stats.st_mode == 16877 ? strcat(cwd, temp) : 1 == 1;
+
+  strcmp(files[selection], "..") == 0
+      ? ({
+          strcpy(cwd, parent_dir);
+          parent_dir = strdup(get_parent_directory(cwd));
+        })
+      : ({
+          temp = malloc(strlen(files[selection]) + 1);
+          snprintf(temp, strlen(files[selection]) + 2, "/%s", files[selection]);
+          strcat(a, temp);
+          stat(a, &file_stats);
+          file_stats.st_mode == 16877
+              ? ({
+                  parent_dir = strdup(cwd);
+                  strcat(cwd, temp);
+                })
+              : ({
+                  char s[100];
+                  snprintf(s, sizeof(s), "%s %s", "xdg-open", files[selection]);
+                  system(s);
+                });
+        });
+
   // wmove(current_win, 14, 2);
   // wprintw(current_win, "%s", cwd);
   // refreshWindows();
@@ -151,15 +159,15 @@ int main() {
   int i = 0;
   init_curses();
   getcwd(cwd, sizeof(cwd));
-
+  parent_dir = strdup(get_parent_directory(cwd));
   int ch;
   // init_windows();
   do {
-    int temp_len;
+    // int temp_len;
 
-    len = get_no_files_in_directory(cwd);
+    // len = get_no_files_in_directory(cwd);
 
-    temp_len = len <= 0 ? 1 : len;
+    // temp_len = len <= 0 ? 1 : len;
 
     // char *files[temp_len], *temp_dir;
     char *files[(len = get_no_files_in_directory(cwd) <= 0

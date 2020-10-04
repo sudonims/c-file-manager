@@ -12,7 +12,7 @@ PROG = fs
 
 all: $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(PROG) $(LIBS)
-	sudo ./fs
+	./fs
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<
