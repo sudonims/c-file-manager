@@ -16,6 +16,8 @@
 
 #include "config.h"
 
+#define isDir(mode) S_ISDIR(mode)
+
 void init_curses() {
   initscr();
   noecho();
@@ -127,32 +129,32 @@ void handle_enter(char *files[]) {
   char *temp, *a;
   a = strdup(cwd);
 
-  strcmp(files[selection], "..") == 0
-      ? ({
-          strcpy(cwd, parent_dir);
-          parent_dir = strdup(get_parent_directory(cwd));
-        })
-      : ({
-          temp = malloc(strlen(files[selection]) + 1);
-          snprintf(temp, strlen(files[selection]) + 2, "/%s", files[selection]);
-          strcat(a, temp);
-          stat(a, &file_stats);
-          file_stats.st_mode == 16877
-              ? ({
-                  parent_dir = strdup(cwd);
-                  strcat(cwd, temp);
-                })
-              : ({
-                  char s[100];
-                  snprintf(s, sizeof(s), "%s %s", "xdg-open", files[selection]);
-                  system(s);
-                });
-        });
-
-  // wmove(current_win, 14, 2);
-  // wprintw(current_win, "%s", cwd);
+  if (strcmp(files[selection], "..") == 0) {
+    strcpy(cwd, parent_dir);
+    parent_dir = strdup(get_parent_directory(cwd));
+  } else {
+    temp = malloc(strlen(files[selection]) + 1);
+    snprintf(temp, strlen(files[selection]) + 2, "/%s", files[selection]);
+    strcat(a, temp);
+    stat(a, &file_stats);
+    isDir(file_stats.st_mode)
+        ? ({
+            parent_dir = strdup(cwd);
+            strcat(cwd, temp);
+          })
+        : ({
+            char s[1000];
+            char temp[1000];
+            snprintf(temp, sizeof(temp), "%s/%s", cwd, files[selection]);
+            printf("%s", temp);
+            // snprintf(s, sizeof(s), "%s %s", "xdg-open", temp);
+            // system(s);
+          });
+  }
+  // wmove(preview_win, 14, 0);
+  // wprintw(preview_win, "%.*s", maxx, temp);
   // refreshWindows();
-  // sleep(10);
+  // sleep(5);
 }
 
 int main() {
@@ -204,7 +206,7 @@ int main() {
       file_stats.st_mode == 16877 ? wattron(current_win, COLOR_PAIR(1))
                                   : wattroff(current_win, COLOR_PAIR(1));
       wmove(current_win, t + 1, 2);
-      wprintw(current_win, "%.*s\n", maxx / 2, files[i], file_stats.st_mode);
+      wprintw(current_win, "%.*s\n", maxx / 2, files[i]);
       // mvprintw(i + 2, 2, "%s", temp_dir);
       free(temp_dir);
       t++;
