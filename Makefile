@@ -12,7 +12,7 @@ all: $(OBJS)
 	./fs
 
 .c.o:
-	$(CC) $(CFLAGS) -c $<
+	gcc $(CFLAGS) -c $<
 
 clean:
 	rm *.o

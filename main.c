@@ -16,7 +16,7 @@
 
 #include "config.h"
 
-#define isDir(mode) S_ISDIR(mode)
+#define isDir(mode) (S_ISDIR(mode))
 
 void init_curses() {
   initscr();
@@ -24,28 +24,29 @@ void init_curses() {
   curs_set(0);
   start_color();
   init_pair(1, DIR_COLOR, 0);
-  init_pair(2, STATUS_FILECOUNT_COLOR, 0);
   init_pair(3, STATUS_SELECTED_COLOR, 0);
 }
-// sigset_t x;
+sigset_t x;
 
 char cwd[1000], *parent_dir;
 struct stat file_stats;
-WINDOW *current_win, *preview_win;
+WINDOW *current_win, *preview_win, *path_win;
 int selection, maxx, maxy, len = 0, start = 0;
 
 void init_windows() {
-  current_win = newwin(maxy, maxx / 2 + 2, 0, 0);
-  preview_win = newwin(maxy, maxx / 2 - 1, 0, maxx / 2 + 1);
+  current_win = newwin(maxy - 2, maxx, 0, 0);
+  // path_win = newwin(2, maxx, maxy, 0);
+  // preview_win = newwin(maxy, maxx / 2 - 1, 0, maxx / 2 + 1);
   keypad(current_win, TRUE);
-  // sigprocmask(SIG_UNBLOCK, &x, NULL);
+  sigprocmask(SIG_UNBLOCK, &x, NULL);
 }
 
 void refreshWindows() {
   box(current_win, 0, 0);
-  box(preview_win, 0, 0);
+  // box(preview_win, 0, 0);
   wrefresh(current_win);
-  wrefresh(preview_win);
+  wrefresh(path_win);
+  // wrefresh(preview_win);
 }
 
 int get_no_files_in_directory(char *directory) {
@@ -137,19 +138,17 @@ void handle_enter(char *files[]) {
     snprintf(temp, strlen(files[selection]) + 2, "/%s", files[selection]);
     strcat(a, temp);
     stat(a, &file_stats);
-    isDir(file_stats.st_mode)
-        ? ({
-            parent_dir = strdup(cwd);
-            strcat(cwd, temp);
-          })
-        : ({
-            char s[1000];
-            char temp[1000];
-            snprintf(temp, sizeof(temp), "%s/%s", cwd, files[selection]);
-            // printf("%s", temp);
-            snprintf(s, sizeof(s), "%s %s", "xdg-open", temp);
-            system(s);
-          });
+    if (isDir(file_stats.st_mode)) {
+      parent_dir = strdup(cwd);
+      strcat(cwd, temp);
+    } else {
+      char s[1000];
+      char temp[1000];
+      snprintf(temp, sizeof(temp), "%s/%s", cwd, files[selection]);
+      // printf("%s", temp);
+      snprintf(s, sizeof(s), "%s %s", "xdg-open", temp);
+      system(s);
+    }
   }
   // wmove(preview_win, 14, 0);
   // wprintw(preview_win, "%.*s", maxx, temp);
@@ -193,7 +192,7 @@ int main() {
       int size = snprintf(NULL, 0, "%s/%s", cwd, files[i]);
       // printf("%d", size);
       if (i == selection) {
-        mvprintw(i + 2, 0, "Hm");
+        // mvprintw(i + 2, 0, "Hm");
         wattron(current_win, A_STANDOUT);
       } else {
         wattroff(current_win, A_STANDOUT);
@@ -203,10 +202,10 @@ int main() {
       snprintf(temp_dir, size + 1, "%s/%s", cwd, files[i]);
 
       stat(temp_dir, &file_stats);
-      file_stats.st_mode == 16877 ? wattron(current_win, COLOR_PAIR(1))
-                                  : wattroff(current_win, COLOR_PAIR(1));
+      isDir(file_stats.st_mode) ? wattron(current_win, COLOR_PAIR(1))
+                                : wattroff(current_win, COLOR_PAIR(1));
       wmove(current_win, t + 1, 2);
-      wprintw(current_win, "%.*s\n", maxx / 2, files[i]);
+      wprintw(current_win, "%.*s\n", maxx, files[i]);
       // mvprintw(i + 2, 2, "%s", temp_dir);
       free(temp_dir);
       t++;
