@@ -27,7 +27,7 @@ void init_curses() {
   init_pair(2, STATUS_FILECOUNT_COLOR, 0);
   init_pair(3, STATUS_SELECTED_COLOR, 0);
 }
-sigset_t x;
+// sigset_t x;
 
 char cwd[1000], *parent_dir;
 struct stat file_stats;
@@ -38,7 +38,7 @@ void init_windows() {
   current_win = newwin(maxy, maxx / 2 + 2, 0, 0);
   preview_win = newwin(maxy, maxx / 2 - 1, 0, maxx / 2 + 1);
   keypad(current_win, TRUE);
-  sigprocmask(SIG_UNBLOCK, &x, NULL);
+  // sigprocmask(SIG_UNBLOCK, &x, NULL);
 }
 
 void refreshWindows() {
@@ -146,9 +146,9 @@ void handle_enter(char *files[]) {
             char s[1000];
             char temp[1000];
             snprintf(temp, sizeof(temp), "%s/%s", cwd, files[selection]);
-            printf("%s", temp);
-            // snprintf(s, sizeof(s), "%s %s", "xdg-open", temp);
-            // system(s);
+            // printf("%s", temp);
+            snprintf(s, sizeof(s), "%s %s", "xdg-open", temp);
+            system(s);
           });
   }
   // wmove(preview_win, 14, 0);

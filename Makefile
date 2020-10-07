@@ -1,5 +1,3 @@
-CC = gcc
-
 NCURSES_CFLAGS = `pkg-config --cflags ncursesw`
 NCURSES_LIBS =  `pkg-config --libs ncursesw`
 
@@ -8,10 +6,9 @@ CFLAGS += $(NCURSES_CFLAGS)
 
 SRCS = main.c
 OBJS = $(SRCS: .c = .o)
-PROG = fs
 
 all: $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o $(PROG) $(LIBS)
+	gcc $(CFLAGS) $(OBJS) -o fs $(LIBS)
 	./fs
 
 .c.o:
