@@ -26,7 +26,7 @@ void init_curses() {
   init_pair(1, DIR_COLOR, 0);
   init_pair(3, STATUS_SELECTED_COLOR, 0);
 }
-sigset_t x;
+// sigset_t x;
 
 char cwd[1000], *parent_dir;
 struct stat file_stats;
@@ -34,19 +34,21 @@ WINDOW *current_win, *preview_win, *path_win;
 int selection, maxx, maxy, len = 0, start = 0;
 
 void init_windows() {
-  current_win = newwin(maxy - 2, maxx, 0, 0);
+  current_win = newwin(maxy - 2, maxx / 2 + 2, 0, 0);
+  refresh();
   // path_win = newwin(2, maxx, maxy, 0);
-  // preview_win = newwin(maxy, maxx / 2 - 1, 0, maxx / 2 + 1);
+  preview_win = newwin(maxy - 2, maxx / 2 - 1, 0, maxx / 2 + 1);
+  refresh();
   keypad(current_win, TRUE);
-  sigprocmask(SIG_UNBLOCK, &x, NULL);
+  // sigprocmask(SIG_UNBLOCK, &x, NULL);
 }
 
 void refreshWindows() {
   box(current_win, 0, 0);
-  // box(preview_win, 0, 0);
+  box(preview_win, 0, 0);
   wrefresh(current_win);
-  wrefresh(path_win);
-  // wrefresh(preview_win);
+  // wrefresh(path_win);
+  wrefresh(preview_win);
 }
 
 int get_no_files_in_directory(char *directory) {
@@ -60,7 +62,7 @@ int get_no_files_in_directory(char *directory) {
   }
 
   while ((dir_entry = readdir(dir_)) != NULL) {
-    // Skip . and ..
+    // Skip .
     if (strcmp(dir_entry->d_name, ".") != 0) {
       len++;
     }
@@ -92,7 +94,7 @@ int get_files(char *directory, char *target[]) {
 void scroll_up() {
   selection--;
   selection = (selection < 0) ? 0 : selection;
-  wclear(current_win);
+  // Scrolling
   if (len >= maxy - 1)
     if (selection <= start + maxy / 2) {
       if (start == 0)
@@ -129,8 +131,10 @@ char *get_parent_directory(char *cwd) {
 void handle_enter(char *files[]) {
   char *temp, *a;
   a = strdup(cwd);
-
+  endwin();
   if (strcmp(files[selection], "..") == 0) {
+    start = 0;
+    selection = 0;
     strcpy(cwd, parent_dir);
     parent_dir = strdup(get_parent_directory(cwd));
   } else {
@@ -139,6 +143,8 @@ void handle_enter(char *files[]) {
     strcat(a, temp);
     stat(a, &file_stats);
     if (isDir(file_stats.st_mode)) {
+      start = 0;
+      selection = 0;
       parent_dir = strdup(cwd);
       strcat(cwd, temp);
     } else {
@@ -150,6 +156,7 @@ void handle_enter(char *files[]) {
       system(s);
     }
   }
+  refresh();
   // wmove(preview_win, 14, 0);
   // wprintw(preview_win, "%.*s", maxx, temp);
   // refreshWindows();
@@ -166,22 +173,19 @@ int main() {
   do {
     // int temp_len;
 
-    // len = get_no_files_in_directory(cwd);
+    len = get_no_files_in_directory(cwd);
 
-    // temp_len = len <= 0 ? 1 : len;
+    len = len <= 0 ? 1 : len;
 
     // char *files[temp_len], *temp_dir;
-    char *files[(len = get_no_files_in_directory(cwd) <= 0
-                           ? 0
-                           : get_no_files_in_directory(cwd))],
-        *temp_dir;
+    char *files[len], *temp_dir;
     get_files(cwd, files);
 
     if (selection > len - 1) {
       selection = len - 1;
     }
 
-    getmaxyx(stdscr, maxx, maxy);
+    getmaxyx(stdscr, maxy, maxx);
     maxy -= 2;
     int t = 0;
     init_windows();
@@ -228,7 +232,10 @@ int main() {
         // default:
         //   break;
     }
-
+    for (i = 0; i < len; i++) {
+      free(files[i]);
+    }
+    // free(files);
   } while (ch != 'q');
   endwin();
 }
