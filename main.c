@@ -36,7 +36,8 @@ int selection, maxx, maxy, len = 0, start = 0;
 void init_windows() {
   current_win = newwin(maxy - 2, maxx / 2 + 2, 0, 0);
   refresh();
-  // path_win = newwin(2, maxx, maxy, 0);
+  path_win = newwin(2, maxx, maxy, 0);
+  refresh();
   preview_win = newwin(maxy - 2, maxx / 2 - 1, 0, maxx / 2 + 1);
   refresh();
   keypad(current_win, TRUE);
@@ -47,7 +48,7 @@ void refreshWindows() {
   box(current_win, 0, 0);
   box(preview_win, 0, 0);
   wrefresh(current_win);
-  // wrefresh(path_win);
+  wrefresh(path_win);
   wrefresh(preview_win);
 }
 
@@ -124,7 +125,7 @@ char *get_parent_directory(char *cwd) {
   int i = strlen(a) - 1;
   while (a[--i] != '/')
     ;
-  a[i] = '\0';
+  a[++i] = '\0';
   return a;
 }
 
@@ -139,19 +140,20 @@ void handle_enter(char *files[]) {
     parent_dir = strdup(get_parent_directory(cwd));
   } else {
     temp = malloc(strlen(files[selection]) + 1);
-    snprintf(temp, strlen(files[selection]) + 2, "/%s", files[selection]);
+    snprintf(temp, strlen(files[selection]) + 2, "%s", files[selection]);
     strcat(a, temp);
     stat(a, &file_stats);
     if (isDir(file_stats.st_mode)) {
       start = 0;
       selection = 0;
       parent_dir = strdup(cwd);
+      strcat(cwd, "/");
       strcat(cwd, temp);
     } else {
       char s[1000];
-      char temp[1000];
-      snprintf(temp, sizeof(temp), "%s/%s", cwd, files[selection]);
-      // printf("%s", temp);
+      char temp_[1000];
+      snprintf(temp_, sizeof(temp_), "%s/%s", cwd, files[selection]);
+      // printf("%s", temp_);
       snprintf(s, sizeof(s), "%s %s", "xdg-open", temp);
       system(s);
     }
@@ -214,6 +216,8 @@ int main() {
       free(temp_dir);
       t++;
     }
+    wmove(path_win, 1, 0);
+    wprintw(path_win, " %s", cwd);
     refreshWindows();
 
     switch ((ch = wgetch(current_win))) {
