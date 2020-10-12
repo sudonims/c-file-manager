@@ -34,12 +34,12 @@ WINDOW *current_win, *preview_win, *path_win;
 int selection, maxx, maxy, len = 0, start = 0;
 
 void init_windows() {
-  current_win = newwin(maxy - 2, maxx / 2 + 2, 0, 0);
+  current_win = newwin(maxy, maxx, 0, 0);
   refresh();
   path_win = newwin(2, maxx, maxy, 0);
   refresh();
-  preview_win = newwin(maxy - 2, maxx / 2 - 1, 0, maxx / 2 + 1);
-  refresh();
+  // preview_win = newwin(maxy, maxx / 2 - 1, 0, maxx / 2 + 1);
+  // refresh();
   keypad(current_win, TRUE);
   // sigprocmask(SIG_UNBLOCK, &x, NULL);
 }
@@ -49,7 +49,7 @@ void refreshWindows() {
   box(preview_win, 0, 0);
   wrefresh(current_win);
   wrefresh(path_win);
-  wrefresh(preview_win);
+  // wrefresh(preview_win);
 }
 
 int get_no_files_in_directory(char *directory) {
@@ -147,14 +147,14 @@ void handle_enter(char *files[]) {
       start = 0;
       selection = 0;
       parent_dir = strdup(cwd);
-      strcat(cwd, "/");
       strcat(cwd, temp);
+      strcat(cwd, "/");
     } else {
       char s[1000];
       char temp_[1000];
-      snprintf(temp_, sizeof(temp_), "%s/%s", cwd, files[selection]);
+      snprintf(temp_, sizeof(temp_), "'%s%s'", cwd, files[selection]);
       // printf("%s", temp_);
-      snprintf(s, sizeof(s), "%s %s", "xdg-open", temp);
+      snprintf(s, sizeof(s), "%s %s", "xdg-open", temp_);
       system(s);
     }
   }
@@ -169,6 +169,7 @@ int main() {
   int i = 0;
   init_curses();
   getcwd(cwd, sizeof(cwd));
+  strcat(cwd, "/");
   parent_dir = strdup(get_parent_directory(cwd));
   int ch;
   // init_windows();
