@@ -136,6 +136,28 @@ void sort(char *files_[], int n) {
   }
 }
 
+void read_(char *path) {
+  // char temp[1000];
+  // snprintf(temp, 1000, "%s%s", cwd, files[selection]);
+  unsigned char buffer;
+  // wclear(current_win);
+  FILE *ptr;
+  printf("%s\n", path);
+  ptr = fopen(path, "rb");
+  if (ptr == NULL) {
+    perror("Error");
+  }
+  while (!feof(ptr)) {
+    fread(&buffer, sizeof(unsigned char), 1, ptr);
+    printf("%x", (int)buffer);
+  }
+  // const size_t fileSize = fread(buffer, sizeof(buffer), 1, ptr);
+  // for (int i = 0; i < 10; i++) {
+  //   printf("0x%x ", (int)buffer[i]);
+  // }
+  endwin();
+}
+
 char *get_parent_directory(char *cwd) {
   char *a;
   a = strdup(cwd);
@@ -169,10 +191,11 @@ void handle_enter(char *files[]) {
     } else {
       char s[1000];
       char temp_[1000];
-      snprintf(temp_, sizeof(temp_), "'%s%s'", cwd, files[selection]);
-      // printf("%s", temp_);
-      snprintf(s, sizeof(s), "%s %s", "xdg-open", temp_);
-      system(s);
+      snprintf(temp_, sizeof(temp_), "%s%s", cwd, files[selection]);
+      printf("%s", temp_);
+      // snprintf(s, sizeof(s), "%s %s", "xdg-open", temp_);
+      read_(temp_);
+      // system(s);
     }
   }
   refresh();
