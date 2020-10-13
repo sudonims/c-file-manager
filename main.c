@@ -83,7 +83,7 @@ int get_files(char *directory, char *target[]) {
   }
 
   while ((dir_entry = readdir(dir_)) != NULL) {
-    // Skip . and ..
+    // Skip .
     if (strcmp(dir_entry->d_name, ".") != 0) {
       target[i++] = strdup(dir_entry->d_name);
     }
@@ -117,6 +117,23 @@ void scroll_down() {
         wclear(current_win);
       }
     }
+}
+
+// void compare(const void *a, const void *b) {
+//   return strcasecmp(*(char **)a, *(char **)b);
+// }
+void sort(char *files_[], int n) {
+  char temp[1000];
+  for (int i = 0; i < n - 1; i++) {
+    for (int j = i + 1; j < n; j++) {
+      if (strcmp(files_[i], files_[j]) > 0) {
+        strcpy(temp, files_[i]);
+        strcpy(files_[i], files_[j]);
+        strcpy(files_[j], temp);
+        // free(temp)
+      }
+    }
+  }
 }
 
 char *get_parent_directory(char *cwd) {
@@ -183,7 +200,8 @@ int main() {
     // char *files[temp_len], *temp_dir;
     char *files[len], *temp_dir;
     get_files(cwd, files);
-
+    // qsort(files, len, sizeof(char *), compare);
+    // sort(files, len);
     if (selection > len - 1) {
       selection = len - 1;
     }
@@ -196,7 +214,7 @@ int main() {
     for (i = start; i < len; i++) {
       if (t == maxy - 1)
         break;
-      int size = snprintf(NULL, 0, "%s/%s", cwd, files[i]);
+      int size = snprintf(NULL, 0, "%s%s", cwd, files[i]);
       // printf("%d", size);
       if (i == selection) {
         // mvprintw(i + 2, 0, "Hm");
@@ -206,7 +224,7 @@ int main() {
       }
 
       temp_dir = malloc(size + 1);
-      snprintf(temp_dir, size + 1, "%s/%s", cwd, files[i]);
+      snprintf(temp_dir, size + 1, "%s%s", cwd, files[i]);
 
       stat(temp_dir, &file_stats);
       isDir(file_stats.st_mode) ? wattron(current_win, COLOR_PAIR(1))
