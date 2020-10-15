@@ -46,8 +46,8 @@ void init_windows() {
 }
 
 void refreshWindows() {
-  box(current_win, 0, 0);
-  box(preview_win, 0, 0);
+  box(current_win, '|', '-');
+  box(preview_win, '|', '-');
   wrefresh(current_win);
   wrefresh(path_win);
   // wrefresh(preview_win);
@@ -154,22 +154,27 @@ void read_(char *path) {
   magic_load(magic, NULL);
   magic_compile(magic, NULL);
   mime = magic_file(magic, path);
-  int t = 0;
+  int t = 2;
+  wmove(current_win, 1, 2);
+  wprintw(current_win, "Press \"E\" to Exit");
   if (strncmp(mime, "text", 4) == 0) {
-    while (fgets(buffer, 256, ptr)) {
+    while (fgets(buffer, sizeof(buffer), ptr)) {
       // fread(&buffer, sizeof(unsigned char), maxx, ptr);
-      wmove(current_win, ++t, 2);
-      wprintw(current_win, "%.*s", maxx - 4, buffer);
+      wmove(current_win, ++t, 1);
+      wprintw(current_win, "%.*s", maxx - 2, buffer);
+      // if (ch == '\n')
+      //   t++;
       // for (int i = 0; i < maxx; i++) {
       //   wprintw(current_win, "%", buffer[i]);
       // }
     }
   } else {
     while (!feof(ptr)) {
-      fread(&buffer, sizeof(unsigned char), maxx, ptr);
-      wmove(current_win, ++t, 2);
-      for (int i = 0; i < maxx; i++) {
-        wprintw(current_win, "%x", (unsigned int)buffer[i]);
+      fread(&buffer, sizeof(unsigned char), maxx - 2, ptr);
+      wmove(current_win, ++t, 1);
+      for (int i = 0; i < maxx - 2; i += 2) {
+        wprintw(current_win, "%02x%02x ", (unsigned int)buffer[i],
+                (unsigned int)buffer[i + 1]);
       }
     }
   }
