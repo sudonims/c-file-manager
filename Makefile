@@ -8,7 +8,7 @@ SRCS = main.c
 OBJS = $(SRCS: .c = .o)
 
 all: $(OBJS)
-	gcc $(CFLAGS) $(OBJS) -o fs $(LIBS)
+	gcc $(CFLAGS) $(OBJS) -o fs $(LIBS) -lmagic
 	./fs
 
 .c.o:

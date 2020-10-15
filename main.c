@@ -1,7 +1,8 @@
-#include <dirent.h>   // Directory
-#include <fcntl.h>    // FD Manipulate (Probably won't need here)
-#include <limits.h>   // INT_MAX, etc...
-#include <locale.h>   // Locale
+#include <dirent.h>  // Directory
+#include <fcntl.h>   // FD Manipulate (Probably won't need here)
+#include <limits.h>  // INT_MAX, etc...
+#include <locale.h>  // Locale
+#include <magic.h>
 #include <ncurses.h>  // Curses (UI)
 #include <pwd.h>      // get uid, username n stuff
 #include <signal.h>   // Dunno what this does but curses code had this...lol
@@ -139,22 +140,43 @@ void sort(char *files_[], int n) {
 void read_(char *path) {
   // char temp[1000];
   // snprintf(temp, 1000, "%s%s", cwd, files[selection]);
-  unsigned char buffer;
-  // wclear(current_win);
+  unsigned char buffer[256];
+  wclear(current_win);
   FILE *ptr;
-  printf("%s\n", path);
+  // printf("%s\n", path);
   ptr = fopen(path, "rb");
   if (ptr == NULL) {
     perror("Error");
   }
-  while (!feof(ptr)) {
-    fread(&buffer, sizeof(unsigned char), 1, ptr);
-    printf("%x", (int)buffer);
+  char *mime;
+  magic_t magic;
+  magic = magic_open(MAGIC_MIME_TYPE);
+  magic_load(magic, NULL);
+  magic_compile(magic, NULL);
+  mime = magic_file(magic, path);
+  int t = 0;
+  if (strncmp(mime, "text", 4) == 0) {
+    while (fgets(buffer, 256, ptr)) {
+      // fread(&buffer, sizeof(unsigned char), maxx, ptr);
+      wmove(current_win, ++t, 2);
+      wprintw(current_win, "%.*s", maxx - 4, buffer);
+      // for (int i = 0; i < maxx; i++) {
+      //   wprintw(current_win, "%", buffer[i]);
+      // }
+    }
+  } else {
+    while (!feof(ptr)) {
+      fread(&buffer, sizeof(unsigned char), maxx, ptr);
+      wmove(current_win, ++t, 2);
+      for (int i = 0; i < maxx; i++) {
+        wprintw(current_win, "%x", (unsigned int)buffer[i]);
+      }
+    }
   }
-  // const size_t fileSize = fread(buffer, sizeof(buffer), 1, ptr);
-  // for (int i = 0; i < 10; i++) {
-  //   printf("0x%x ", (int)buffer[i]);
-  // }
+  refreshWindows();
+  int ch;
+  while ((ch = wgetch(current_win)) != 'e')
+    ;
   endwin();
 }
 
