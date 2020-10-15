@@ -5,7 +5,6 @@
 #include <magic.h>
 #include <ncurses.h>  // Curses (UI)
 #include <pwd.h>      // get uid, username n stuff
-#include <signal.h>   // Dunno what this does but curses code had this...lol
 #include <stdio.h>    //	std i/o
 #include <stdlib.h>   //	std libs
 #include <string.h>   //	string opr
@@ -27,7 +26,6 @@ void init_curses() {
   init_pair(1, DIR_COLOR, 0);
   init_pair(3, STATUS_SELECTED_COLOR, 0);
 }
-// sigset_t x;
 
 char cwd[1000], *parent_dir;
 struct stat file_stats;
@@ -42,12 +40,11 @@ void init_windows() {
   // preview_win = newwin(maxy, maxx / 2 - 1, 0, maxx / 2 + 1);
   // refresh();
   keypad(current_win, TRUE);
-  // sigprocmask(SIG_UNBLOCK, &x, NULL);
 }
 
 void refreshWindows() {
   box(current_win, '|', '-');
-  box(preview_win, '|', '-');
+  // box(preview_win, '|', '-');
   wrefresh(current_win);
   wrefresh(path_win);
   // wrefresh(preview_win);
@@ -185,6 +182,47 @@ void read_(char *path) {
   endwin();
 }
 
+void rename_file(char *files[]) {
+  char new_name[100];
+  int i = 0, c;
+  wclear(path_win);
+  wmove(path_win, 1, 0);
+  while ((c = wgetch(path_win)) != '\n') {
+    if (c == 127 || c == 8) {
+      new_name[--i] = '\0';
+    } else {
+      new_name[i++] = c;
+      new_name[i] = '\0';
+    }
+    wclear(path_win);
+    wmove(path_win, 1, 0);
+    wprintw(path_win, "%s", new_name);
+  }
+  c = ' ';
+LOOP:
+  wclear(path_win);
+  wmove(path_win, 1, 0);
+  wprintw(path_win, "%s (y/n) %c", new_name, c);
+  c = wgetch(path_win);
+  char *a, *b;
+  switch (c) {
+    case 'y':
+    case 'Y':
+      a = strdup(cwd);
+      b = strdup(cwd);
+      strcat(a, files[selection]);
+      strcat(b, new_name);
+      rename(a, b);
+      break;
+    case 'n':
+    case 'N':
+      break;
+    default:
+      goto LOOP;
+      break;
+  }
+}
+
 char *get_parent_directory(char *cwd) {
   char *a;
   a = strdup(cwd);
@@ -302,8 +340,9 @@ int main() {
       case KEY_ENTER:
         handle_enter(files);
         break;
-        // default:
-        //   break;
+      case 'r':
+        rename_file(files);
+        break;
     }
     for (i = 0; i < len; i++) {
       free(files[i]);
