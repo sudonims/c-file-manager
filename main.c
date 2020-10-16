@@ -135,27 +135,42 @@ void sort(char *files_[], int n) {
   }
 }
 
+int check_text(char *path) {
+  FILE *ptr;
+  ptr = fopen(path, "r");
+  int c;
+  while ((c = fgetc(ptr)) != EOF) {
+    if (c < 0 || c > 127) {
+      fclose(ptr);
+      return 0;
+    }
+  }
+  fclose(ptr);
+  return 1;
+}
+
 void read_(char *path) {
   // char temp[1000];
   // snprintf(temp, 1000, "%s%s", current_directory_.cwd, files[selection]);
   unsigned char buffer[256];
   wclear(current_win);
   FILE *ptr;
-  // printf("%s\n", path);
+  printf("%s\n", path);
   ptr = fopen(path, "rb");
   if (ptr == NULL) {
     perror("Error");
   }
-  char *mime;
-  magic_t magic;
-  magic = magic_open(MAGIC_MIME_TYPE);
-  magic_load(magic, NULL);
-  magic_compile(magic, NULL);
-  mime = magic_file(magic, path);
+  // char *mime;
+  // mime = (char *)malloc(sizeof(char) * 100);
+  // magic_t magic;
+  // magic = magic_open(MAGIC_MIME_TYPE);
+  // magic_load(magic, NULL);
+  // magic_compile(magic, NULL);
+  // mime = magic_file(magic, path);
   int t = 2;
   wmove(current_win, 1, 2);
   wprintw(current_win, "Press \"E\" to Exit (Caps Lock off)");
-  if (strncmp(mime, "text", 4) == 0) {
+  if (check_text(path)) {
     while (fgets(buffer, sizeof(buffer), ptr)) {
       // fread(&buffer, sizeof(unsigned char), maxx, ptr);
       wmove(current_win, ++t, 1);
@@ -258,11 +273,14 @@ void handle_enter(char *files[]) {
       strcat(current_directory_.cwd, temp);
       strcat(current_directory_.cwd, "/");
     } else {
-      char s[1000];
+      printf("Entered\n");
       char temp_[1000];
+      printf("%s%s", current_directory_.cwd, files[selection]);
       snprintf(temp_, sizeof(temp_), "%s%s", current_directory_.cwd,
                files[selection]);
+
       // snprintf(s, sizeof(s), "%s %s", "xdg-open", temp_);
+      printf("%s", temp_);
       read_(temp_);
       // system(s);
     }
