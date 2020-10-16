@@ -26,7 +26,7 @@ int main() {
   // write(1, b, sizeof(b));
   // printf("%s\n", a);
   // printf("%s", b);
-  char *mime;
+  const char *mime;
   magic_t magic;
 
   magic = magic_open(MAGIC_MIME_TYPE);

@@ -249,7 +249,38 @@ char *get_parent_directory(char *cwd) {
   return a;
 }
 
-void copy(char *files[]) {}
+void copy(char *files[]) {
+  char new_path[1000];
+  int i = 0, c;
+  wclear(path_win);
+  wmove(path_win, 1, 0);
+  while ((c = wgetch(path_win)) != '\n') {
+    if (c == 127 || c == 8) {
+      new_path[--i] = '\0';
+    } else {
+      new_path[i++] = c;
+      new_path[i] = '\0';
+    }
+    wclear(path_win);
+    wmove(path_win, 1, 0);
+    wprintw(path_win, "%s", new_path);
+  }
+  FILE *new_file, *old_file;
+  strcat(new_path, files[selection]);
+  char curr_path[1000];
+  snprintf(curr_path, sizeof(curr_path), "%s%s", current_directory_.cwd,
+           files[selection]);
+  old_file = fopen(curr_path, "r");
+  new_file = fopen(new_path, "a");
+  wmove(current_win, 10, 10);
+  wprintw(current_win, "%.*s,%s", maxx, curr_path, new_path);
+  printf("%s %s", curr_path, new_path);
+  while ((c = fgetc(old_file)) != EOF) {
+    fprintf(new_file, "%c", c);
+  }
+  fclose(old_file);
+  fclose(new_file);
+}
 
 void handle_enter(char *files[]) {
   char *temp, *a;
@@ -365,6 +396,9 @@ int main() {
         break;
       case 'r':
         rename_file(files);
+        break;
+      case 'c':
+        copy(files);
         break;
     }
     for (i = 0; i < len; i++) {
