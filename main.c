@@ -27,10 +27,11 @@ void init_curses() {
   init_pair(3, STATUS_SELECTED_COLOR, 0);
 }
 
-char cwd[1000], *parent_dir;
+// char /*current_directory_.cwd[1000],*/ *parent_dir;
 struct stat file_stats;
 WINDOW *current_win, *preview_win, *path_win;
 int selection, maxx, maxy, len = 0, start = 0;
+directory_t current_directory_;
 
 void init_windows() {
   current_win = newwin(maxy, maxx, 0, 0);
@@ -136,7 +137,7 @@ void sort(char *files_[], int n) {
 
 void read_(char *path) {
   // char temp[1000];
-  // snprintf(temp, 1000, "%s%s", cwd, files[selection]);
+  // snprintf(temp, 1000, "%s%s", current_directory_.cwd, files[selection]);
   unsigned char buffer[256];
   wclear(current_win);
   FILE *ptr;
@@ -153,7 +154,7 @@ void read_(char *path) {
   mime = magic_file(magic, path);
   int t = 2;
   wmove(current_win, 1, 2);
-  wprintw(current_win, "Press \"E\" to Exit");
+  wprintw(current_win, "Press \"E\" to Exit (Caps Lock off)");
   if (strncmp(mime, "text", 4) == 0) {
     while (fgets(buffer, sizeof(buffer), ptr)) {
       // fread(&buffer, sizeof(unsigned char), maxx, ptr);
@@ -208,8 +209,8 @@ LOOP:
   switch (c) {
     case 'y':
     case 'Y':
-      a = strdup(cwd);
-      b = strdup(cwd);
+      a = strdup(current_directory_.cwd);
+      b = strdup(current_directory_.cwd);
       strcat(a, files[selection]);
       strcat(b, new_name);
       rename(a, b);
@@ -233,15 +234,18 @@ char *get_parent_directory(char *cwd) {
   return a;
 }
 
+void copy(char *files[]) {}
+
 void handle_enter(char *files[]) {
   char *temp, *a;
-  a = strdup(cwd);
+  a = strdup(current_directory_.cwd);
   endwin();
   if (strcmp(files[selection], "..") == 0) {
     start = 0;
     selection = 0;
-    strcpy(cwd, parent_dir);
-    parent_dir = strdup(get_parent_directory(cwd));
+    strcpy(current_directory_.cwd, current_directory_.parent_dir);
+    current_directory_.parent_dir =
+        strdup(get_parent_directory(current_directory_.cwd));
   } else {
     temp = malloc(strlen(files[selection]) + 1);
     snprintf(temp, strlen(files[selection]) + 2, "%s", files[selection]);
@@ -250,14 +254,14 @@ void handle_enter(char *files[]) {
     if (isDir(file_stats.st_mode)) {
       start = 0;
       selection = 0;
-      parent_dir = strdup(cwd);
-      strcat(cwd, temp);
-      strcat(cwd, "/");
+      current_directory_.parent_dir = strdup(current_directory_.cwd);
+      strcat(current_directory_.cwd, temp);
+      strcat(current_directory_.cwd, "/");
     } else {
       char s[1000];
       char temp_[1000];
-      snprintf(temp_, sizeof(temp_), "%s%s", cwd, files[selection]);
-      printf("%s", temp_);
+      snprintf(temp_, sizeof(temp_), "%s%s", current_directory_.cwd,
+               files[selection]);
       // snprintf(s, sizeof(s), "%s %s", "xdg-open", temp_);
       read_(temp_);
       // system(s);
@@ -273,21 +277,22 @@ void handle_enter(char *files[]) {
 int main() {
   int i = 0;
   init_curses();
-  getcwd(cwd, sizeof(cwd));
-  strcat(cwd, "/");
-  parent_dir = strdup(get_parent_directory(cwd));
+  getcwd(current_directory_.cwd, sizeof(current_directory_.cwd));
+  strcat(current_directory_.cwd, "/");
+  current_directory_.parent_dir =
+      strdup(get_parent_directory(current_directory_.cwd));
   int ch;
   // init_windows();
   do {
     // int temp_len;
 
-    len = get_no_files_in_directory(cwd);
+    len = get_no_files_in_directory(current_directory_.cwd);
 
     len = len <= 0 ? 1 : len;
 
     // char *files[temp_len], *temp_dir;
     char *files[len], *temp_dir;
-    get_files(cwd, files);
+    get_files(current_directory_.cwd, files);
     // qsort(files, len, sizeof(char *), compare);
     // sort(files, len);
     if (selection > len - 1) {
@@ -302,7 +307,7 @@ int main() {
     for (i = start; i < len; i++) {
       if (t == maxy - 1)
         break;
-      int size = snprintf(NULL, 0, "%s%s", cwd, files[i]);
+      int size = snprintf(NULL, 0, "%s%s", current_directory_.cwd, files[i]);
       // printf("%d", size);
       if (i == selection) {
         // mvprintw(i + 2, 0, "Hm");
@@ -312,7 +317,7 @@ int main() {
       }
 
       temp_dir = malloc(size + 1);
-      snprintf(temp_dir, size + 1, "%s%s", cwd, files[i]);
+      snprintf(temp_dir, size + 1, "%s%s", current_directory_.cwd, files[i]);
 
       stat(temp_dir, &file_stats);
       isDir(file_stats.st_mode) ? wattron(current_win, COLOR_PAIR(1))
@@ -324,7 +329,7 @@ int main() {
       t++;
     }
     wmove(path_win, 1, 0);
-    wprintw(path_win, " %s", cwd);
+    wprintw(path_win, " %s", current_directory_.cwd);
     refreshWindows();
 
     switch ((ch = wgetch(current_win))) {

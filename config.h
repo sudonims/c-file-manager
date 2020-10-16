@@ -3,7 +3,7 @@
 
 typedef struct directory_ {
   char cwd[1000];
-  char *parent;
+  char *parent_dir;
   char *files[];
 } directory_t;
 
