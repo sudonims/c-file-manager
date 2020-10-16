@@ -249,7 +249,39 @@ char *get_parent_directory(char *cwd) {
   return a;
 }
 
-void copy(char *files[]) {
+void delete_(char *files[]) {
+  char curr_path[1000];
+  snprintf(curr_path, sizeof(curr_path), "%s%s", current_directory_.cwd,
+           files[selection]);
+  remove(curr_path);
+}
+
+void delete_file(char *files[]) {
+  int c;
+  wclear(path_win);
+  wmove(path_win, 1, 0);
+  wprintw(path_win, "Are you sure to delete? (y/n)");
+
+LOOP:
+  c = wgetch(path_win);
+  wclear(path_win);
+  wmove(path_win, 1, 0);
+  wprintw(path_win, "Are you sure to delete? (y/n) %c", c);
+  switch (c) {
+    case 'y':
+    case 'Y':
+      delete_(files);
+      break;
+    case 'n':
+    case 'N':
+      break;
+    default:
+      goto LOOP;
+      break;
+  }
+}
+
+void copy_files(char *files[]) {
   char new_path[1000];
   int i = 0, c;
   wclear(path_win);
@@ -280,6 +312,11 @@ void copy(char *files[]) {
   }
   fclose(old_file);
   fclose(new_file);
+}
+
+void move_file(char *files[]) {
+  copy_files(files);
+  delete_(files);
 }
 
 void handle_enter(char *files[]) {
@@ -395,10 +432,20 @@ int main() {
         handle_enter(files);
         break;
       case 'r':
+      case 'R':
         rename_file(files);
         break;
       case 'c':
-        copy(files);
+      case 'C':
+        copy_files(files);
+        break;
+      case 'm':
+      case 'M':
+        move_file(files);
+        break;
+      case 'd':
+      case 'D':
+        delete_file(files);
         break;
     }
     for (i = 0; i < len; i++) {
