@@ -289,6 +289,7 @@ void copy_files(char *files[]) {
   while ((c = wgetch(path_win)) != '\n') {
     if (c == 127 || c == 8) {
       new_path[--i] = '\0';
+      i = i < 0 ? 0 : i;
     } else {
       new_path[i++] = c;
       new_path[i] = '\0';
