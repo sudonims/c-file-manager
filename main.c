@@ -162,6 +162,10 @@ void read_(char *path) {
   // snprintf(temp, 1000, "%s%s", current_directory_->cwd, files[selection]);
   unsigned char buffer[256];
   wclear(current_win);
+  wclear(info_win);
+  wresize(current_win, maxy, maxx);
+
+  // wrefresh(current_win);
   FILE *ptr;
   printf("%s\n", path);
   ptr = fopen(path, "rb");
@@ -203,7 +207,9 @@ void read_(char *path) {
       }
     }
   }
-  refreshWindows();
+  box(current_win, '|', '-');
+  wrefresh(current_win);
+  // refreshWindows();
   int ch;
   // GETCHAR:
   // ch = wgetch(current_win);
