@@ -371,14 +371,14 @@ void handle_enter(char *files[]) {
       strcat(current_directory_->cwd, temp);
       strcat(current_directory_->cwd, "/");
     } else {
-      printf("Entered\n");
+      // printf("Entered\n");
       char temp_[1000];
-      printf("%s%s", current_directory_->cwd, files[selection]);
+      // printf("%s%s", current_directory_->cwd, files[selection]);
       snprintf(temp_, sizeof(temp_), "%s%s", current_directory_->cwd,
                files[selection]);
 
       // snprintf(s, sizeof(s), "%s %s", "xdg-open", temp_);
-      printf("%s", temp_);
+      // printf("%s", temp_);
       read_(temp_);
       // system(s);
     }
@@ -390,15 +390,48 @@ void handle_enter(char *files[]) {
   // sleep(5);
 }
 
+float get_recursive_size_directory(char *path) {
+  float directory_size = 0;
+  DIR *dir_;
+  struct dirent *dir_entry;
+  struct stat file_stat;
+  char temp_path[1000];
+  dir_ = opendir(path);
+  if (dir_ == NULL) {
+    return -1;
+  }
+  // wmove(info_win, 10, 12);
+  while ((dir_entry = readdir(dir_)) != NULL) {
+    if (strcmp(dir_entry->d_name, ".") != 0 &&
+        strcmp(dir_entry->d_name, "..") != 0) {
+      snprintf(temp_path, sizeof(temp_path), "%s/%s", path, dir_entry->d_name);
+      if (dir_entry->d_type != DT_DIR) {
+        stat(temp_path, &file_stat);
+        directory_size += (float)(file_stat.st_size) / (float)1024;
+        // wprintw(info_win, "%s %f\n", dir_entry->d_name, directory_size);
+        // wrefresh(info_win);
+      } else {
+        directory_size += get_recursive_size_directory(temp_path);
+      }
+    }
+  }
+  closedir(dir_);
+  return directory_size;
+}
+
 void show_file_info(char *files[]) {
   wmove(info_win, 1, 1);
   char temp_address[1000];
   snprintf(temp_address, sizeof(temp_address), "%s%s", current_directory_->cwd,
            files[selection]);
   stat(temp_address, &file_stats);
+  // if (isDir(file_stats.st_mode)) {
+  //   get_recursive_size_directory(temp_address);
+  // }
   wprintw(info_win, "Name: %s\n Type: %s\n Size: %.2f KB\n", files[selection],
           isDir(file_stats.st_mode) ? "Folder" : "File",
-          (float)file_stats.st_size / (float)1024);
+          isDir(file_stats.st_mode) ? get_recursive_size_directory(temp_address)
+                                    : (float)file_stats.st_size / (float)1024);
 }
 
 int main() {
