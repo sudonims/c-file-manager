@@ -178,6 +178,7 @@ void read_(char *path) {
   int t = 2;
   wmove(current_win, 1, 2);
   wprintw(current_win, "Press \"E\" to Exit (Caps Lock off)");
+  // PRINT:
   if (check_text(path)) {
     while (fgets(buffer, sizeof(buffer), ptr)) {
       // fread(&buffer, sizeof(unsigned char), maxx, ptr);
@@ -187,6 +188,9 @@ void read_(char *path) {
       //   t++;
       // for (int i = 0; i < maxx; i++) {
       //   wprintw(current_win, "%", buffer[i]);
+      // }
+      // if (t == maxy - 2) {
+      //   break;
       // }
     }
   } else {
@@ -201,8 +205,19 @@ void read_(char *path) {
   }
   refreshWindows();
   int ch;
-  while ((ch = wgetch(current_win)) != 'e')
-    ;
+  // GETCHAR:
+  // ch = wgetch(current_win);
+  while ((ch = wgetch(current_win)) != 'e') {
+    wmove(current_win, 4, 4);
+    wprintw(current_win, "%d", ch);
+  }
+  // if (ch == KEY_DOWN) {
+  //   goto PRINT;
+  // } else if (ch == 'e') {
+  //   1;
+  // } else {
+  //   goto GETCHAR;
+  // }
   endwin();
 }
 
@@ -270,7 +285,7 @@ void delete_file(char *files[]) {
   wmove(path_win, 1, 0);
   wprintw(path_win, "Are you sure to delete? (y/n)");
 
-LOOP:
+LOOP_:
   c = wgetch(path_win);
   wclear(path_win);
   wmove(path_win, 1, 0);
@@ -284,7 +299,7 @@ LOOP:
     case 'N':
       break;
     default:
-      goto LOOP;
+      goto LOOP_;
       break;
   }
 }
