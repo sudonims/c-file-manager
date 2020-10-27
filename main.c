@@ -31,6 +31,7 @@ void init_curses() {
 struct stat file_stats;
 WINDOW *current_win, *info_win, *path_win;
 int selection, maxx, maxy, len = 0, start = 0;
+size_t total_files = 0;
 directory_t *current_directory_ = NULL;
 
 void init() {
@@ -392,12 +393,14 @@ void handle_enter(char *files[]) {
 
 float get_recursive_size_directory(char *path) {
   float directory_size = 0;
-  DIR *dir_;
+  DIR *dir_ = NULL;
   struct dirent *dir_entry;
   struct stat file_stat;
   char temp_path[1000];
   dir_ = opendir(path);
   if (dir_ == NULL) {
+    perror(path);
+    exit(0);
     return -1;
   }
   // wmove(info_win, 10, 12);
@@ -407,6 +410,7 @@ float get_recursive_size_directory(char *path) {
       snprintf(temp_path, sizeof(temp_path), "%s/%s", path, dir_entry->d_name);
       if (dir_entry->d_type != DT_DIR) {
         stat(temp_path, &file_stat);
+        total_files++;
         directory_size += (float)(file_stat.st_size) / (float)1024;
         // wprintw(info_win, "%s %f\n", dir_entry->d_name, directory_size);
         // wrefresh(info_win);
@@ -422,16 +426,25 @@ float get_recursive_size_directory(char *path) {
 void show_file_info(char *files[]) {
   wmove(info_win, 1, 1);
   char temp_address[1000];
-  snprintf(temp_address, sizeof(temp_address), "%s%s", current_directory_->cwd,
-           files[selection]);
-  stat(temp_address, &file_stats);
-  // if (isDir(file_stats.st_mode)) {
-  //   get_recursive_size_directory(temp_address);
-  // }
-  wprintw(info_win, "Name: %s\n Type: %s\n Size: %.2f KB\n", files[selection],
-          isDir(file_stats.st_mode) ? "Folder" : "File",
-          isDir(file_stats.st_mode) ? get_recursive_size_directory(temp_address)
-                                    : (float)file_stats.st_size / (float)1024);
+  total_files = 0;
+  if (strcmp(files[selection], "..") != 0) {
+    snprintf(temp_address, sizeof(temp_address), "%s%s",
+             current_directory_->cwd, files[selection]);
+    stat(temp_address, &file_stats);
+    // if (isDir(file_stats.st_mode)) {
+    //   get_recursive_size_directory(temp_address);
+    // }
+
+    wprintw(info_win, "Name: %s\n Type: %s\n Size: %.2f KB\n", files[selection],
+            isDir(file_stats.st_mode) ? "Folder" : "File",
+            isDir(file_stats.st_mode)
+                ? get_recursive_size_directory(temp_address)
+                : (float)file_stats.st_size / (float)1024);
+    wprintw(info_win, " No. Files: %zu\n",
+            isDir(file_stats.st_mode) ? total_files : 1);
+  } else {
+    wprintw(info_win, "Press Enter to go back\n");
+  }
 }
 
 int main() {

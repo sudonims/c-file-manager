@@ -9,7 +9,7 @@ OBJS = $(SRCS: .c = .o)
 
 all: $(OBJS)
 	gcc $(CFLAGS) $(OBJS) -o fsm $(LIBS) -lmagic
-	./fsm
+	sudo ./fsm
 
 .c.o:
 	gcc $(CFLAGS) -c $<
