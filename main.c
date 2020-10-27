@@ -29,7 +29,7 @@ void init_curses() {
 
 // char /*current_directory_->cwd[1000],*/ *parent_dir;
 struct stat file_stats;
-WINDOW *current_win, *preview_win, *path_win;
+WINDOW *current_win, *info_win, *path_win;
 int selection, maxx, maxy, len = 0, start = 0;
 directory_t *current_directory_ = NULL;
 
@@ -42,21 +42,21 @@ void init() {
 }
 
 void init_windows() {
-  current_win = newwin(maxy, maxx, 0, 0);
+  current_win = newwin(maxy, maxx / 2, 0, 0);
   refresh();
   path_win = newwin(2, maxx, maxy, 0);
   refresh();
-  // preview_win = newwin(maxy, maxx / 2 - 1, 0, maxx / 2 + 1);
-  // refresh();
+  info_win = newwin(maxy, maxx / 2, 0, maxx / 2);
+  refresh();
   keypad(current_win, TRUE);
 }
 
 void refreshWindows() {
   box(current_win, '|', '-');
-  // box(preview_win, '|', '-');
+  box(info_win, '|', '-');
   wrefresh(current_win);
   wrefresh(path_win);
-  // wrefresh(preview_win);
+  wrefresh(info_win);
 }
 
 int get_no_files_in_directory(char *directory) {
@@ -378,10 +378,21 @@ void handle_enter(char *files[]) {
     }
   }
   refresh();
-  // wmove(preview_win, 14, 0);
-  // wprintw(preview_win, "%.*s", maxx, temp);
+  // wmove(info_win, 14, 0);
+  // wprintw(info_win, "%.*s", maxx, temp);
   // refreshWindows();
   // sleep(5);
+}
+
+void show_file_info(char *files[]) {
+  wmove(info_win, 1, 1);
+  char temp_address[1000];
+  snprintf(temp_address, sizeof(temp_address), "%s%s", current_directory_->cwd,
+           files[selection]);
+  stat(temp_address, &file_stats);
+  wprintw(info_win, "Name: %s\n Type: %s\n Size: %.2f KB\n", files[selection],
+          isDir(file_stats.st_mode) ? "Folder" : "File",
+          (float)file_stats.st_size / (float)1024);
 }
 
 int main() {
@@ -441,6 +452,7 @@ int main() {
     }
     wmove(path_win, 1, 0);
     wprintw(path_win, " %s", current_directory_->cwd);
+    show_file_info(files);
     refreshWindows();
 
     switch ((ch = wgetch(current_win))) {
