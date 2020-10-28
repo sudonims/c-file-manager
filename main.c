@@ -415,6 +415,8 @@ float get_recursive_size_directory(char *path) {
         // wprintw(info_win, "%s %f\n", dir_entry->d_name, directory_size);
         // wrefresh(info_win);
       } else {
+        total_files++;
+        directory_size += 4;
         directory_size += get_recursive_size_directory(temp_path);
       }
     }
