@@ -162,6 +162,7 @@ void read_(char *path) {
   // char temp[1000];
   // snprintf(temp, 1000, "%s%s", current_directory_->cwd, files[selection]);
   unsigned char buffer[256];
+  int ch;
   wclear(current_win);
   wclear(info_win);
   wresize(current_win, maxy, maxx);
@@ -173,58 +174,53 @@ void read_(char *path) {
   if (ptr == NULL) {
     perror("Error");
   }
-  // char *mime;
-  // mime = (char *)malloc(sizeof(char) * 100);
-  // magic_t magic;
-  // magic = magic_open(MAGIC_MIME_TYPE);
-  // magic_load(magic, NULL);
-  // magic_compile(magic, NULL);
-  // mime = magic_file(magic, path);
-  int t = 2;
-  wmove(current_win, 1, 2);
-  wprintw(current_win, "Press \"E\" to Exit (Caps Lock off)");
-  // PRINT:
-  if (check_text(path)) {
-    while (fgets(buffer, sizeof(buffer), ptr)) {
-      // fread(&buffer, sizeof(unsigned char), maxx, ptr);
-      wmove(current_win, ++t, 1);
-      wprintw(current_win, "%.*s", maxx - 2, buffer);
-      // if (ch == '\n')
-      //   t++;
-      // for (int i = 0; i < maxx; i++) {
-      //   wprintw(current_win, "%", buffer[i]);
-      // }
-      // if (t == maxy - 2) {
-      //   break;
-      // }
-    }
-  } else {
-    while (!feof(ptr)) {
-      fread(&buffer, sizeof(unsigned char), maxx - 2, ptr);
-      wmove(current_win, ++t, 1);
-      for (int i = 0; i < maxx - 2; i += 2) {
-        wprintw(current_win, "%02x%02x ", (unsigned int)buffer[i],
-                (unsigned int)buffer[i + 1]);
+  int t = 2, pos = 0, lines = 0, count;
+
+  do {
+    wmove(current_win, 1, 2);
+    wprintw(current_win, "Press \"E\" to Exit (Caps Lock off)");
+    // PRINT:
+    if (check_text(path)) {
+      count = 0;
+      while (fgets(buffer, sizeof(buffer), ptr)) {
+        // fread(&buffer, sizeof(unsigned char), maxx, ptr);
+        if (count < pos) {
+          count++;
+          continue;
+        }
+        wmove(current_win, ++t, 1);
+        wprintw(current_win, "%.*s", maxx - 2, buffer);
+
+        // if (t - pos == maxy - 2)
+        //   break;
+      }
+    } else {
+      while (!feof(ptr)) {
+        fread(&buffer, sizeof(unsigned char), maxx - 2, ptr);
+        wmove(current_win, ++t, 1);
+        for (int i = 0; i < maxx - 2; i += 2) {
+          wprintw(current_win, "%02x%02x ", (unsigned int)buffer[i],
+                  (unsigned int)buffer[i + 1]);
+        }
       }
     }
-  }
-  box(current_win, '|', '-');
-  wrefresh(current_win);
-  // refreshWindows();
-  int ch;
-  // GETCHAR:
-  // ch = wgetch(current_win);
-  while ((ch = wgetch(current_win)) != 'e') {
-    wmove(current_win, 4, 4);
-    wprintw(current_win, "%d", ch);
-  }
-  // if (ch == KEY_DOWN) {
-  //   goto PRINT;
-  // } else if (ch == 'e') {
-  //   1;
-  // } else {
-  //   goto GETCHAR;
-  // }
+    box(current_win, '|', '-');
+    wrefresh(current_win);
+    ch = wgetch(current_win);
+    wclear(current_win);
+    switch (ch) {
+      case 259:
+        pos = pos == 0 ? 0 : pos - 1;
+        // printf("%d\n", pos);
+        break;
+      case 258:
+        // pos = pos == lines ? lines : pos + 1;
+        pos++;
+        // printf("%d\n", pos);
+        break;
+    }
+  } while (ch != 'e');
+
   endwin();
 }
 
@@ -416,7 +412,7 @@ float get_recursive_size_directory(char *path) {
         // wrefresh(info_win);
       } else {
         total_files++;
-        directory_size += 4;
+        directory_size += (float)4;
         directory_size += get_recursive_size_directory(temp_path);
       }
     }
